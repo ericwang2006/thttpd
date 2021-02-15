@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+  <head>
+    <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="http://www.acme.com/styles.css">
+    <title>redirect man page</title>
+  </head>
+
+  <body>
+
+    <img class="logo" width="111" height="64" src="anvil_thttpd.gif" alt="anvil">
+    <h3>redirect man page</h3>
+
+    <p>
+      [<a href="redirect_man.html#NAME">NAME</a>]
+      [<a href="redirect_man.html#SYNOPSIS">SYNOPSIS</a>]
+      [<a href="redirect_man.html#DESCRIPTION">DESCRIPTION</a>]
+      [<a href="redirect_man.html#SEEALSO">SEE ALSO</a>]
+      [<a href="redirect_man.html#BUGS">BUGS / DEFICIENCIES</a>]
+      [<a href="redirect_man.html#AUTHOR">AUTHOR</a>]
+    </p>
+
+    <hr>
+
+    <pre>
+    redirect(8)   MAINTENANCE COMMANDS    redirect(8)
+    </pre>
+
+    <h4><a name="NAME">NAME</a></h4>
+
+    <p>
+      redirect - simple redirection CGI program
+    </p>
+
+    <h4><a name="SYNOPSIS">SYNOPSIS</a></h4>
+
+    <p>
+      <code>
+        redirect
+      </code>
+    </p>
+
+    <h4><a name="DESCRIPTION">DESCRIPTION</a></h4>
+
+    <p>
+      Three steps to set up a redirection:
+    </p>
+
+    <ol>
+      <li>
+        Make sure your web server is set up to allow CGI programs.
+      </li>
+      <li>
+        Make a symbolic link from the file or directory you want to redirect,
+        pointing at this program in the CGI bin directory.
+      </li>
+      <li>
+        Add an entry to the file ".redirects" in the directory where your
+        http server runs CGI programs.  For most servers, this is the
+        directory where the given CGI program lives.  The format of the
+        file is a bunch of lines with a filename, whitespace, and the new
+        URL.  For example:
+        <pre><code>
+    /test/oldfile.html    http://www.acme.com/test/newfile.html
+        </code></pre>
+      </li>
+    </ol>
+
+    <p>
+      The easiest way to figure out precisely what filename to put
+      into .redirects is to set up the symlink and then click on it.
+      You'll get back a "404 Not Found" page which includes the filename
+      as received by the redirect program, and that's what you want to use.
+    </p>
+
+    <p>
+      Note: this is designed for <a href="thttpd_man.html">thttpd</a>
+      and using it with other web servers may require some hacking.
+      A possible gotcha is with the symbolic link from the old file
+      pointing at this script - servers other than thttpd may not allow
+      that link to be run as a CGI program, because they don't check the
+      link to see that it points into the allowed CGI directory.
+    </p>
+
+    <h4><a name="SEEALSO">SEE ALSO</a></h4>
+
+    <p>
+      <a href="thttpd_man.html">thttpd(8)</a>
+    </p>
+
+    <h4><a name="BUGS">BUGS / DEFICIENCIES</a></h4>
+
+    <p>
+      It would be really cool to have this program look for
+      the .redirects file in the same directory as the file being redirected,
+      instead of in the binaries directory.  Unfortunately, this appears
+      to be impossible with the information CGI gives, plus the
+      non-standardized but widespread practice of running CGI programs
+      in the directory where the binary lives.  Perhaps CGI 1.2 will
+      address this.
+    </p>
+
+    <h4><a name="AUTHOR">AUTHOR</a></h4>
+
+    <p>
+      Copyright &copy; 1995 by Jef Poskanzer &lt;webmaster&#64;mail.acme.com&gt;.
+      All rights reserved.
+    </p>
+
+    <hr class="thick">
+
+    <a href="http://validator.w3.org/check?uri=referer"><img class="logo" width="88" height="31" border="0" src="http://www.acme.com/resources/images/valid-html401-gold.png" alt="valid HTML"></a>
+
+    <p>
+      <a href="http://www.acme.com/">ACME Labs</a> / <a href="http://www.acme.com/software/">Software</a> / <a href="index.html">thttpd</a><br>
+      <a href="http://www.acme.com/mailto/?id=wa"><img class="mailto" src="http://www.acme.com/mailto/wa.gif" alt="email"></a>
+    </p>
+
+  </body>
+
+</html>

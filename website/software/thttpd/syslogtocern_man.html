@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+  <head>
+    <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="http://www.acme.com/styles.css">
+    <title>syslogtocern man page</title>
+  </head>
+
+  <body>
+
+    <img class="logo" width="111" height="64" src="anvil_thttpd.gif" alt="anvil">
+    <h3>syslogtocern man page</h3>
+
+    <p>
+      [<a href="syslogtocern_man.html#NAME">NAME</a>]
+      [<a href="syslogtocern_man.html#SYNOPSIS">SYNOPSIS</a>]
+      [<a href="syslogtocern_man.html#DESCRIPTION">DESCRIPTION</a>]
+      [<a href="syslogtocern_man.html#SEEALSO">SEE ALSO</a>]
+      [<a href="syslogtocern_man.html#BUGS">BUGS / DEFICIENCIES</a>]
+      [<a href="syslogtocern_man.html#AUTHOR">AUTHOR</a>]
+    </p>
+
+    <hr>
+
+    <pre>
+    syslogtocern(8)   MAINTENANCE COMMANDS    syslogtocern(8)
+    </pre>
+
+    <h4><a name="NAME">NAME</a></h4>
+
+    <p>
+      syslogtocern - convert thttpd syslog entries into CERN Common Log format
+    </p>
+
+    <h4><a name="SYNOPSIS">SYNOPSIS</a></h4>
+
+    <p>
+      <code>
+        syslogtocern logfile ...
+      </code>
+    </p>
+
+    <h4><a name="DESCRIPTION">DESCRIPTION</a></h4>
+
+    <p>
+      Reads one or more syslog files as input.
+      Takes the thttpd entries, and converts them into CERN Common Log format.
+      Produces four files as output: access_log, agent_log, referer_log,
+      error_log.
+      If files with those names already exist in the current directory, they
+      are overwritten.
+    </p>
+
+    <h4><a name="SEEALSO">SEE ALSO</a></h4>
+
+    <p>
+      <a href="thttpd_man.html">thttpd(8)</a>
+    </p>
+
+    <h4><a name="BUGS">BUGS / DEFICIENCIES</a></h4>
+
+    <p>
+      Lumps all thttpd processes together.
+      It ought to produce separate files for each, identified by IP address and
+      port number.
+      However, that change represents a huge increase in complexity,
+      so next version.
+    </p>
+
+    <h4><a name="AUTHOR">AUTHOR</a></h4>
+
+    <p>
+      Copyright &copy; 1995 by Jef Poskanzer &lt;webmaster&#64;mail.acme.com&gt;.
+      All rights reserved.
+    </p>
+
+    <hr class="thick">
+
+    <a href="http://validator.w3.org/check?uri=referer"><img class="logo" width="88" height="31" border="0" src="http://www.acme.com/resources/images/valid-html401-gold.png" alt="valid HTML"></a>
+
+    <p>
+      <a href="http://www.acme.com/">ACME Labs</a> / <a href="http://www.acme.com/software/">Software</a> / <a href="index.html">thttpd</a><br>
+      <a href="http://www.acme.com/mailto/?id=wa"><img class="mailto" src="http://www.acme.com/mailto/wa.gif" alt="email"></a>
+    </p>
+
+  </body>
+
+</html>

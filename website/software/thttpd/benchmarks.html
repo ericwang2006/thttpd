@@ -1,0 +1,574 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+  <head>
+    <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="http://www.acme.com/styles.css">
+    <title>Web Server Comparisons</title>
+  </head>
+
+  <body>
+
+<!--AD_START-->
+<div align="center">
+<script type="text/javascript"><!--
+google_ad_client = "pub-5759188606642566";
+/* 728x90, created 9/23/09 */
+google_ad_slot = "8720321611";
+google_ad_width = 728;
+google_ad_height = 90;
+google_ad_channel = "8465122053";
+//-->
+</script>
+<script type="text/javascript"
+src="https://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+</div>
+<hr class="thick">
+<!--AD_END-->
+
+    <img class="logo" width="111" height="64" src="anvil_thttpd.gif" alt="anvil">
+    <h3>Web Server Comparisons</h3>
+
+    <blockquote>
+      <i>
+        "...factoring out I/O, the primary determinant to server performance
+	is the concurrency strategy."
+      </i>
+      <blockquote>
+        -- <a href="http://www.cs.wustl.edu/~jxh/research/research.html">JAWS: Understanding High Performance Web Systems</a>
+      </blockquote>
+    </blockquote>
+
+    <p>
+      Some comparisons between various web servers.
+      We look at features, sizes, and performance.
+      The headers in the table are links to explanatory notes below.
+      Bright green entries indicate something unusually good, and red
+      entries are something bad, sometimes with a link to a note explaining why.
+    </p>
+
+    <p>
+      Don't get too excited over the performance figures.
+      Most of these servers have enough oomph to keep a T1 saturated, running
+      on a lowly 100MHz Pentium or maybe even a 486.
+      Very very few web applications need more power than that.
+      So, the fact that Apache is not that fast shouldn't be of concern
+      to most people.
+    </p>
+
+    <p>
+      Last updated 12jul98.
+    </p>
+
+    <table border="2">
+      <tr>
+	<th align="center" colspan="4"><a href="benchmarks.html#software">software</a></th>
+	<th align="center" colspan="5"><a href="benchmarks.html#features">features</a></th>
+	<th align="center" colspan="4"><a href="benchmarks.html#size">size</a></th>
+	<th align="center" colspan="2"><a href="benchmarks.html#rps">RPS</a></th>
+	<th align="center" colspan="1"><a href="benchmarks.html#max-users">max users</a></th>
+	<th align="center" colspan="1" rowspan="2"><a href="benchmarks.html#name">name</a></th>
+      </tr><tr>
+	<th align="center"><a href="benchmarks.html#name">name</a></th>
+	<th align="center"><a href="benchmarks.html#version">version</a></th>
+	<th align="center"><a href="benchmarks.html#released">released</a></th>
+	<th align="center"><a href="benchmarks.html#active">active devel</a></th>
+	<th align="center"><a href="benchmarks.html#model">model</a></th>
+	<th align="center"><a href="benchmarks.html#auto-conf">auto conf</a></th>
+	<th align="center"><a href="benchmarks.html#basic-auth">basic auth</a></th>
+	<th align="center"><a href="benchmarks.html#chroot">chroot</a></th>
+	<th align="center"><a href="benchmarks.html#throttling">throttling</a></th>
+	<th align="center"><a href="benchmarks.html#tar-bytes">tar bytes</a></th>
+	<th align="center"><a href="benchmarks.html#files">source files</a></th>
+	<th align="center"><a href="benchmarks.html#lines">source lines</a></th>
+	<th align="center"><a href="benchmarks.html#exe">exe</a></th>
+	<th align="center"><a href="benchmarks.html#small">small files</a></th>
+	<th align="center"><a href="benchmarks.html#cgi">CGI</a></th>
+	<th align="center"><a href="benchmarks.html#large">large files</a></th>
+      </tr><tr>
+	<th align="center"><a href="index.html">thttpd</a></th>
+	<td align="center">2.03</td>
+	<td align="center">11jul98</td>
+	<td align="center">yes</td>
+	<td align="center">select</td>
+	<td align="center">yes</td>
+	<td align="center">yes</td>
+	<td align="center">yes</td>
+	<td align="center" bgcolor="#99ff99">yes</td>
+	<td align="right">406,016</td>
+	<td align="right">20</td>
+	<td align="right">7,229</td>
+	<td align="right">49,584</td>
+	<td align="right" bgcolor="#99ff99">720</td>
+	<td align="right" bgcolor="#99ff99">100</td>
+	<td align="right" bgcolor="#99ff99">1000+</td>
+	<th align="center"><a href="index.html">thttpd</a></th>
+      </tr><tr>
+	<th align="center"><a href="http://www.apache.org">Apache</a></th>
+	<td align="center">1.3.0</td>
+	<td align="center">05jun98</td>
+	<td align="center">yes</td>
+	<td align="center">pre-fork</td>
+	<td align="center">yes</td>
+	<td align="center">yes</td>
+	<td align="center">no</td>
+	<td align="center">no</td>
+	<td align="right">4,925,440</td>
+	<td align="right">149</td>
+	<td align="right">73,381</td>
+	<td align="right">397,152</td>
+	<td align="right">250</td>
+	<td align="right">90</td>
+	<td align="right">150</td>
+	<th align="center"><a href="http://www.apache.org">Apache</a></th>
+      </tr><tr>
+	<th align="center"><a href="http://mathop.diva.nl/">mathopd</a></th>
+	<td align="center">1.2b9</td>
+	<td align="center">23may98</td>
+	<td align="center">yes</td>
+	<td align="center">select</td>
+	<td align="center" bgcolor="#cc9999"><a href="benchmarks.html#mathopd-dnc">yes</a></td>
+	<td align="center" bgcolor="#cc9999">no</td>
+	<td align="center">yes</td>
+	<td align="center">no</td>
+	<td align="right">112,640</td>
+	<td align="right">8</td>
+	<td align="right">3,658</td>
+	<td align="right">49,088</td>
+	<td align="right" bgcolor="#99ff99">770</td>
+	<td align="right">75</td>
+	<td align="right">500</td>
+	<th align="center"><a href="http://mathop.diva.nl/">mathopd</a></th>
+      </tr><tr>
+	<th align="center"><a href="http://www.roxen.com/">Roxen</a></th>
+	<td align="center">1.2.29</td>
+	<td align="center">10jun98</td>
+	<td align="center">yes</td>
+	<td align="center">threads</td>
+	<td align="center" bgcolor="#cc9999"><a href="benchmarks.html#Roxen-dnc">yes</a></td>
+	<td align="center">yes</td>
+	<td align="center">yes</td>
+	<td align="center">no</td>
+	<td align="right">14,274,560</td>
+	<td align="right">1,480</td>
+	<td align="right">247,789</td>
+	<td align="right">502,284</td>
+	<td align="right">170</td>
+	<td align="right" bgcolor="#cc9999"><a href="benchmarks.html#Roxen-CGI">11</a></td>
+	<td align="right">50</td>
+	<th align="center"><a href="http://www.roxen.com/">Roxen</a></th>
+      </tr><tr>
+	<th align="center"><a href="http://www.boa.org/">Boa</a></th>
+	<td align="center">0.92</td>
+	<td align="center">23dec96</td>
+	<td align="center">yes</td>
+	<td align="center">select</td>
+	<td align="center" bgcolor="#cc9999">no</td>
+	<td align="center" bgcolor="#cc9999">no</td>
+	<td align="center">no</td>
+	<td align="center">no</td>
+	<td align="right">225,280</td>
+	<td align="right">21</td>
+	<td align="right">4,103</td>
+	<td align="right">75,788</td>
+	<td align="right">475</td>
+	<td align="right" bgcolor="#99ff99">115</td>
+	<td align="right">50</td>
+	<th align="center"><a href="http://www.boa.org/">Boa</a></th>
+      </tr><tr>
+	<th align="center"><a href="http://www.w3.org/Jigsaw/">Jigsaw</a></th>
+	<td align="center">2.0beta1</td>
+	<td align="center">08apr98</td>
+	<td align="center">yes</td>
+	<td align="center">Java threads</td>
+	<td align="center">n/a</td>
+	<td align="center">yes</td>
+	<td align="center">yes</td>
+	<td align="center">no</td>
+	<td align="right">11,341,824</td>
+	<td align="right">594</td>
+	<td align="right">95,744</td>
+	<td align="right">1,841,601</td>
+	<td align="right" bgcolor="#cc9999"><a href="benchmarks.html#Jigsaw-mystery">45</a></td>
+	<td align="right">n/a</td>
+	<td align="right" bgcolor="#cc9999">25</td>
+	<th align="center"><a href="http://www.w3.org/Jigsaw/">Jigsaw</a></th>
+      </tr><tr>
+	<th align="center"><a href="http://www.acme.com/java/software/Acme.Serve.Serve.html">Acme.Serve</a></th>
+	<td align="center">-</td>
+	<td align="center">18may98</td>
+	<td align="center">yes</td>
+	<td align="center">Java threads</td>
+	<td align="center">n/a</td>
+	<td align="center" bgcolor="#cc9999">no</td>
+	<td align="center">no</td>
+	<td align="center" bgcolor="#99ff99">yes</td>
+	<td align="right">302,592</td>
+	<td align="right">27</td>
+	<td align="right">4,718</td>
+	<td align="right">79,943</td>
+	<td align="right" bgcolor="#cc9999"><a href="benchmarks.html#Acme-small">45</a></td>
+	<td align="right">n/a</td>
+	<td align="right" bgcolor="#cc9999">25</td>
+	<th align="center"><a href="http://www.acme.com/java/software/Acme.Serve.Serve.html">Acme.Serve</a></th>
+      </tr><tr>
+	<th align="center"><a href="http://www.w3.org/hypertext/WWW/Daemon/Status.html">CERN</a></th>
+	<td align="center">3.0A</td>
+	<td align="center">15jul96</td>
+	<td align="center">no</td>
+	<td align="center">fork</td>
+	<td align="center">yes</td>
+	<td align="center">yes</td>
+	<td align="center">no</td>
+	<td align="center">no</td>
+	<td align="right">2,703,360</td>
+	<td align="right">153</td>
+	<td align="right">56,028</td>
+	<td align="right">561,696</td>
+	<td align="right">115</td>
+	<td align="right">65</td>
+	<td align="right">300</td>
+	<th align="center"><a href="http://www.w3.org/hypertext/WWW/Daemon/Status.html">CERN</a></th>
+      </tr><tr>
+	<th align="center"><a href="http://hoohoo.ncsa.uiuc.edu/">NCSA</a></th>
+	<td align="center">1.5.2a-export</td>
+	<td align="center">12oct96</td>
+	<td align="center">no</td>
+	<td align="center">pre-fork</td>
+	<td align="center" bgcolor="#cc9999">no</td>
+	<td align="center">yes</td>
+	<td align="center">no</td>
+	<td align="center">no</td>
+	<td align="right">931,840</td>
+	<td align="right">77</td>
+	<td align="right">23,726</td>
+	<td align="right">196,040</td>
+	<td align="right">260</td>
+	<td align="right">70</td>
+	<td align="right">350</td>
+	<th align="center"><a href="http://hoohoo.ncsa.uiuc.edu/">NCSA</a></th>
+      </tr><tr>
+	<th align="center"><a href="http://home.netscape.com/">Netscape FastTrack</a></th>
+	<td align="center">3.01-export-us</td>
+	<td align="center">02oct97</td>
+	<td align="center">no</td>
+	<td align="center">threads</td>
+	<td align="center">n/a</td>
+	<td align="center">yes</td>
+	<td align="center">?</td>
+	<td align="center">no</td>
+	<td align="right">62,443,520</td>
+	<td align="right">n/a</td>
+	<td align="right">n/a</td>
+	<td align="right">1,896,016</td>
+	<!-- <td align="right" bgcolor="#99ff99">850</td> -->
+	<td align="right" bgcolor="#cc9999"><a href="benchmarks.html#Netscape-license">-</a></td>
+	<!-- <td align="right" bgcolor="#cc9999"><a href="#Netscape-CGI">5</a></td> -->
+	<td align="right" bgcolor="#cc9999"><a href="benchmarks.html#Netscape-license">-</a></td>
+	<!-- <td align="right">350</td> -->
+	<td align="right" bgcolor="#cc9999"><a href="benchmarks.html#Netscape-license">-</a></td>
+	<th align="center"><a href="http://home.netscape.com/">Netscape FastTrack</a></th>
+      </tr><tr>
+	<th align="center"><a href="http://home.netscape.com/">Netscape Enterprise</a></th>
+	<td align="center">3.5.1-export-us</td>
+	<td align="center">02feb98</td>
+	<td align="center">yes</td>
+	<td align="center">threads</td>
+	<td align="center">n/a</td>
+	<td align="center">yes</td>
+	<td align="center">?</td>
+	<td align="center">no</td>
+	<td align="right">130,426,880</td>
+	<td align="right">n/a</td>
+	<td align="right">n/a</td>
+	<td align="right">1,977,568</td>
+	<!-- <td align="right" bgcolor="#99ff99">750</td> -->
+	<td align="right" bgcolor="#cc9999"><a href="benchmarks.html#Netscape-license">-</a></td>
+	<!-- <td align="right" bgcolor="#cc9999"><a href="#Netscape-CGI">4.5</a></td> -->
+	<td align="right" bgcolor="#cc9999"><a href="benchmarks.html#Netscape-license">-</a></td>
+	<!-- <td align="right">250</td> -->
+	<td align="right" bgcolor="#cc9999"><a href="benchmarks.html#Netscape-license">-</a></td>
+	<th align="center"><a href="http://home.netscape.com/">Netscape Enterprise</a></th>
+      </tr><tr>
+	<th align="center"><a href="http://www.zeus.co.uk/">Zeus</a></th>
+	<td align="center">3.1.4</td>
+	<td align="center">10jul98</td>
+	<td align="center">yes</td>
+	<td align="center">select</td>
+	<td align="center">n/a</td>
+	<td align="center">yes</td>
+	<td align="center">no</td>
+	<td align="center" bgcolor="#99ff99">yes</td>
+	<td align="right">3,747,840</td>
+	<td align="right">n/a</td>
+	<td align="right">n/a</td>
+	<td align="right">1,367,976</td>
+	<td align="right" bgcolor="#99ff99">1050</td>
+	<td align="right">70</td>
+	<td align="right">500</td>
+	<th align="center"><a href="http://www.zeus.co.uk/">Zeus</a></th>
+      </tr>
+    </table>
+
+    <p>
+      Notes:
+    </p>
+
+    <ul>
+      <li> <a name="software">Software</a> - which web server.
+        <ul>
+	  <li>
+	    <a name="name">Name</a> - the name of the server, and a link to
+	    its home page.
+	  </li>
+	  <li>
+	    <a name="version">Version</a> - the version tested here.
+	  </li>
+	  <li>
+	    <a name="released">Released</a> - when it was released.
+	  </li>
+	  <li>
+	    <a name="active">Active devel</a> - whether it is currently
+	    under development.
+	  </li>
+        </ul>
+      </li>
+      <li>
+	<a name="features">Features</a> - some key server features.
+        <ul>
+	  <li>
+	    <a name="model">Model</a> - what kind of server it is.
+	    The models are:
+	    <ul>
+	      <li>
+		fork - start a new process for each request.
+	      </li>
+	      <li>
+		pre-fork - pre-start a pool of processes which each handle
+	        multiple requests.
+	      </li>
+	      <li>
+		threads - use threads instead of processes.
+	      </li>
+	      <li>
+		Java threads - this version of the Java runtime uses
+	        "Green threads" instead of native threads, so it acts more
+		like the select-based servers.
+	      </li>
+	      <li>
+		select - use non-blocking I/O and the select() system call
+	        to handle multiple requests in a single process, single thread.
+	      </li>
+	    </ul>
+	  </li>
+	  <li>
+	    <a name="auto-conf">Auto-conf</a> - whether there's a script
+	    to automatically configure the build process for your OS.
+	    <ul>
+	      <li>
+		<a name="mathopd-dnc">mathopd</a> did not compile out-of-box
+		under Solaris 2.6, I had to make a minor edit.
+	      </li>
+	      <li>
+		<a name="Roxen-dnc">Roxen</a> did not compile under
+		Solaris 2.6, I had to build under Solaris 2.5.1.
+	      </li>
+	    </ul>
+	  </li>
+	  <li>
+	    <a name="basic-auth">Basic auth</a> - whether the server supports
+	    Basic Authentication, for password-protected web pages.
+	  </li>
+	  <li>
+	    <a name="chroot">Chroot</a> - whether the server lets you use
+	    the chroot() system call to enhance security.
+	  </li>
+	  <li>
+	    <a name="throttling">Throttling</a> - the ability to set bandwidth
+	    limits on certain pages, so they don't use more than their fair
+	    share of the server's resources.
+	  </li>
+        </ul>
+      </li>
+      <li>
+	<a name="size">Size</a> - various sizes of parts of the server
+        <ul>
+	  <li>
+	    <a name="tar-bytes">Tar bytes</a> - the uncompressed source
+	    tarchive size.
+	  </li>
+	  <li>
+	    <a name="files">Source files</a> - how many source and
+	    header files.
+	  </li>
+	  <li>
+	    <a name="lines">Source lines</a> - how many lines in the source
+	    and header files.
+	  </li>
+	  <li>
+	    <a name="exe">Exe</a> - the executable size.
+	    For the compiled program this is size of the main executable file,
+	    stripped.
+	    For the Java servers it's the total size of the .class files or .zip
+	    files.
+	    For Roxen it's the size of the Pike interpreter.
+	  </li>
+	</ul>
+      </li>
+      <li>
+	The benchmark test system is a 297MHz Ultra Sparc with
+        256MB RAM / 512MB swap running Solaris 2.6, otherwise totally quiescent.
+        RLIMIT_NOFILE is 256 soft / 1024 hard, and v.v_maxup is 3941.
+      </li>
+      <li>
+	The test loads were generated on a separate machine connected via
+        100MB/s ethernet.  The test client is
+        <a href="http://www.acme.com/software/http_load/">http_load</a>, doing
+        multiple requests in parallel, with checksumming enabled.
+      </li>
+      <li>
+	All the test runs were done at least twice on different days, and
+        all the shapes and inflection points etc. proved to be completely
+        repeatable.
+      </li>
+      <li>
+	All programs are in their out-of-box configuration, except as
+        needed for the tests (e.g. enabling CGI).  And except for mathopd,
+        which doesn't have an out-of-box configuration - I used
+        <a href="mathopd_config.txt">this one</a>.
+      </li>
+      <li>
+	<a name="rps">RPS</a> - maximum requests per second.  This is
+	determined by running the test load at various parallel-request
+	rates and finding the maximum response rate.  See the graph below
+	for the full data.
+	<ul>
+	  <li>
+	    <a name="small">Small files</a> - the small-file test load
+	    consists of 1000 files, each 1KB long, requested randomly.
+	    <ul>
+	      <li>
+		<a name="Acme-small">Acme.Serve</a> exitted at 60 parallel
+	        requests, due to running out of file descriptors.  Apparently
+	        the Java runtime uses three file descriptors per thread, or
+	        something like that.  But still, the program shouldn't exit!
+	      </li>
+	      <li>
+		<a name="Jigsaw-mystery">Jigsaw</a> mysteriously refused to
+	        serve 40 of the 1000 files in the test load.  Same 40
+		consistently.  I took those 40 out of the test and the
+		other 960 files worked fine.  This sort of thing doesn't
+		really build confidence in a server.
+	      </li>
+	    </ul>
+	  </li>
+	  <li>
+	    <a name="cgi">CGI</a> - the CGI test load consists of a
+	    <a href="hello_cgi.c">trivial "hello world" C program</a>.
+	    <ul>
+	      <li>
+		<a name="Roxen-CGI">Roxen</a> started returning bad checksums
+	        at only 3 parallel CGI requests.
+	      </li>
+	      <!--
+	      <li>
+		<a name="Netscape-CGI">FastTrack and Enterprise</a> started
+	        returning bad checksums at 85 and 80 parallel requests,
+	        respectively.  No doubt this and their piss-poor CGI service
+		rates are both due to their very large memory footprint,
+		over 60MB.  But still, it's a fixable problem.  Netscape
+		could write a separate CGI-proxy process or something.
+		I guess their theory is you should use NSAPI instead.
+	      </li>
+	      -->
+	      <li>
+		Some of the servers do not implement the parts of the CGI
+	        spec that require header-parsing - thttpd, mathopd, Boa,
+	        perhaps others.  This could be seen as giving them an unfair
+	        advantage at performance comparisons.
+	      </li>
+	    </ul>
+	  </li>
+        </ul>
+      </li>
+      <li>
+	<a name="max-users">Max users</a> - maximum number of simultaneous
+	users that can be handled.  This is determined by running the test
+	load at various parallel-request rates and seeing when it starts
+	screwing up.  Typical screwups are running out of memory or processes,
+	so that requests start timing out or getting refused.
+        <ul>
+	  <li>
+	    <a name="large">Large files</a> - the large-file test load
+	    consists of 100 files, each 1MB long, requested randomly.
+	    Also, each connection is throttled to simulate a 33.6Kbps modem.
+	    Note that 1000 33.6Kbps connections is 3/4 of a T3.
+	  </li>
+        </ul>
+      </li>
+      <li>
+	Some servers that I wanted to benchmark but didn't get to:
+        <ul>
+	  <li>
+	    phttpd I couldn't get to run.
+	  </li>
+	  <li>
+	    <a name="Netscape-license">Netscape's</a>
+	    <a href="http://home.netscape.com/download/server.html">license agreement</a>
+	    prohibits publishing benchmark results (section 6 viii).
+	  </li>
+        </ul>
+      </li>
+    </ul>
+
+    <p>
+      Here's a graph of the full data:
+    </p>
+
+    <p>
+      <img src="serverperf.gif" alt="server performance">
+    </p>
+
+    <p>
+      Comments:
+    </p>
+
+    <ul>
+      <li>
+	That nice diagonal line is very interesting.  A bunch of very
+        different servers follow it exactly for the first part of their curve.
+        Its slope is 5 hits/second per user, indicating that each hit takes a
+        minimum of 1/5th second to handle.  But other servers don't follow it,
+        showing that it's not an inherent limit in the test setup.
+        thttpd-2.00 was following the line, while mathopd, a very similar
+	server, does not, so I made some changes to thttpd to try and get
+	its latency to be more like mathopd's.  Turns out the change that
+	made the difference was sending the response headers and the first
+	load of data as a single packet, instead of as two separate packets.
+        Apparently this avoids triggering TCP's "delayed ACK", a 1/5th
+        second wait to see if more packets are coming in.  thttpd-2.01 has the
+        single-packet change.
+      </li>
+      <li>
+	The sharp drop-off at 125 users for a bunch of different servers
+        is mysterious, especially considering it applies to servers of three
+        different models - pre-fork, threads, and select - and that other
+        servers are immune.
+      </li>
+    </ul>
+
+    <hr class="thick">
+
+    <a href="http://validator.w3.org/check?uri=referer"><img class="logo" width="88" height="31" border="0" src="http://www.acme.com/resources/images/valid-html401-gold.png" alt="valid HTML"></a>
+
+    <p>
+      <a href="http://www.acme.com/">ACME Labs</a> / <a href="http://www.acme.com/software/">Software</a> / <a href="index.html">thttpd</a><br>
+      <a href="http://www.acme.com/mailto/?id=wa"><img class="mailto" src="http://www.acme.com/mailto/wa.gif" alt="email"></a>
+    </p>
+
+  </body>
+
+</html>

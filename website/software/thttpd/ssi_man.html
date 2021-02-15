@@ -1,0 +1,230 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+  <head>
+    <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="http://www.acme.com/styles.css">
+    <title>ssi man page</title>
+  </head>
+
+  <body>
+
+    <img class="logo" width="111" height="64" src="anvil_thttpd.gif" alt="anvil">
+    <h3>ssi man page</h3>
+
+    <p>
+      [<a href="ssi_man.html#NAME">NAME</a>]
+      [<a href="ssi_man.html#SYNOPSIS">SYNOPSIS</a>]
+      [<a href="ssi_man.html#DESCRIPTION">DESCRIPTION</a>]
+      [<a href="ssi_man.html#FORMAT">INCLUDE FORMAT</a>]
+      [<a href="ssi_man.html#VARIABLES">VARIABLES</a>]
+      [<a href="ssi_man.html#BUGS">BUGS / DEFICIENCIES</a>]
+      [<a href="ssi_man.html#SEEALSO">SEE ALSO</a>]
+      [<a href="ssi_man.html#AUTHOR">AUTHOR</a>]
+    </p>
+
+    <hr>
+
+    <pre>
+    ssi(8)        MAINTENANCE COMMANDS         ssi(8)
+    </pre>
+
+    <h4><a name="NAME">NAME</a></h4>
+
+    <p>
+      ssi - server-side-includes CGI program
+    </p>
+
+    <h4><a name="SYNOPSIS">SYNOPSIS</a></h4>
+
+    <p>
+      <code>
+        ssi
+      </code>
+    </p>
+
+    <h4><a name="DESCRIPTION">DESCRIPTION</a></h4>
+
+    <p>
+      This is an external CGI program that gives you the same functionality
+      as the built-in server-side-includes feature in some HTTP daemons.
+      It is written for use with thttpd(8), but should be easy to adapt
+      to other systems.
+    </p>
+
+    <p>
+      To use this program, first make sure it is installed in your server's
+      CGI area, and that CGI is enabled.
+      Then set up your URLs with the path to the document you want parsed
+      as the "pathinfo".
+      That's the part of the URL that comes after the CGI program name.
+      For example, if the URL to this program is:
+    </p>
+    <pre><code>
+    http://www.acme.com/cgi-bin/ssi
+    </code></pre>
+    <p>
+      and the url for your document is:
+    </p>
+    <pre><code>
+    http://www.acme.com/users/wecoyote/doc.html
+    </code></pre>
+    <p>
+      then the compound URL that gives you the document filtered through the
+      program would be:
+    </p>
+    <pre><code>
+    http://www.acme.com/cgi-bin/ssi/users/wecoyote/doc.html
+    </code></pre>
+
+    <p>
+      The format description below is adapted from
+      <a href="http://hoohoo.ncsa.uiuc.edu/docs/tutorials/includes.html">http://hoohoo.ncsa.uiuc.edu/docs/tutorials/includes.html</a>
+    </p>
+
+    <h4><a name="FORMAT">INCLUDE FORMAT</a></h4>
+
+    <p>
+      All directives are formatted as SGML comments within the document.
+      This is in case the document should ever find itself in the client's
+      hands unparsed.
+      Each directive has the following format:
+    </p>
+    <pre><code>
+    &lt;!--#command tag1="value1" tag2="value2" --&gt;
+    </code></pre>
+    <p>
+      Each command takes different arguments, most only accept one tag
+      at a time.
+      Here is a breakdown of the commands and their associated tags:
+    </p>
+    <ul>
+      <li>
+        config:
+        The config directive controls various aspects of the file parsing.
+        There are two valid tags:
+        <ul>
+          <li>
+            timefmt:
+            gives the server a new format to use when providing dates.
+            This is a string compatible with the strftime library call.
+          </li>
+          <li>
+            sizefmt:
+            determines the formatting to be used when displaying the
+            size of a file.
+            Valid choices are bytes, for a formatted byte count
+            (formatted as 1,234,567), or abbrev for an abbreviated version
+            displaying the number of kilobytes or megabytes the file occupies.
+          </li>
+        </ul>
+      </li>
+      <li>
+        include:
+        Inserts the text of another document into the parsed document.
+        The inserted file is parsed recursively, so it can contain
+        server-side-include directives too.
+        This command accepts two tags:
+        <ul>
+          <li>
+            virtual:
+            Gives a virtual path to a document on the server.
+	  </li>
+          <li>
+            file:
+            Gives a pathname relative to the current directory. ../ cannot
+            be used in this pathname, nor can absolute paths be used.
+	  </li>
+        </ul>
+      </li>
+      <li>
+        echo:
+        Prints the value of one of the include variables (defined below).
+        Any dates are printed subject to the currently configured timefmt.
+        The only valid tag to this command is var, whose value is the name
+	of the variable you wish to echo.
+      </li>
+      <li>
+        fsize:
+        prints the size of the specified file,
+        subject to the sizefmt parameter to the config command.
+        Valid tags are the same as with the include command.
+      </li>
+      <li>
+        flastmod:
+        prints the last modification date of the specified file, subject
+        to the formatting preference given by the timefmt parameter to config.
+        Valid tags are the same as with the include command.
+      </li>
+    </ul>
+
+    <h4><a name="VARIABLES">VARIABLES</a></h4>
+
+    <p>
+      A number of variables are made available to parsed documents.
+      In addition to
+      the CGI variable set, the following variables are made available:
+    </p>
+    <ul>
+      <li>
+        DOCUMENT_NAME:
+        The current filename.
+      </li>
+      <li>
+        DOCUMENT_URI:
+        The virtual path to this document (such as /~robm/foo.shtml).
+      </li>
+      <li>
+        QUERY_STRING_UNESCAPED:
+        The unescaped version of any search query the client sent.
+      </li>
+      <li>
+        DATE_LOCAL:
+        The current date, local time zone.
+        Subject to the timefmt parameter to the config command.
+      </li>
+      <li>
+        DATE_GMT:
+        Same as DATE_LOCAL but in Greenwich mean time.
+      </li>
+      <li>
+        LAST_MODIFIED:
+        The last modification date of the current document.
+        Subject to timefmt like the others.
+      </li>
+    </ul>
+
+    <h4><a name="BUGS">BUGS / DEFICIENCIES</a></h4>
+
+    <p>
+      Does not implement the "exec" directive.
+      Actually, I consider this neither a bug nor a deficiency, but some may.
+    </p>
+
+    <h4><a name="SEEALSO">SEE ALSO</a></h4>
+
+    <p>
+      <a href="thttpd_man.html">thttpd(8)</a>, strftime(3)
+    </p>
+
+    <h4><a name="AUTHOR">AUTHOR</a></h4>
+
+    <p>
+      Copyright &copy; 1995 by Jef Poskanzer &lt;webmaster&#64;mail.acme.com&gt;.
+      All rights reserved.
+    </p>
+
+    <hr class="thick">
+
+    <a href="http://validator.w3.org/check?uri=referer"><img class="logo" width="88" height="31" border="0" src="http://www.acme.com/resources/images/valid-html401-gold.png" alt="valid HTML"></a>
+
+    <p>
+      <a href="http://www.acme.com/">ACME Labs</a> / <a href="http://www.acme.com/software/">Software</a> / <a href="index.html">thttpd</a><br>
+      <a href="http://www.acme.com/mailto/?id=wa"><img class="mailto" src="http://www.acme.com/mailto/wa.gif" alt="email"></a>
+    </p>
+
+  </body>
+
+</html>

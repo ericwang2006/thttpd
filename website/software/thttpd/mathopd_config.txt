@@ -1,0 +1,22 @@
+DefaultName localtoast
+NumConnections 1024
+
+Server {
+	Port 8082
+	Control {
+		Alias /
+		Location /var/tmp/benchmarks/testbed
+		Types {
+			text/html { html }
+			text/plain { * }
+		}
+		IndexNames { index.html }
+		Specials {
+			CGI { cgi }
+		}
+	}
+}
+
+Log /dev/null
+ErrorLog /var/tmp/benchmarks/testbed/mathopd.errs
+PIDFile /var/tmp/benchmarks/testbed/mathopd.pid

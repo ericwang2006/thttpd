@@ -1,0 +1,744 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+  <head>
+    <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="http://www.acme.com/styles.css">
+    <title>thttpd notes</title>
+  </head>
+
+  <body>
+
+<!--AD_START-->
+<div align="center">
+<script type="text/javascript"><!--
+google_ad_client = "pub-5759188606642566";
+/* 728x90, created 9/23/09 */
+google_ad_slot = "8720321611";
+google_ad_width = 728;
+google_ad_height = 90;
+google_ad_channel = "8465122053";
+//-->
+</script>
+<script type="text/javascript"
+src="https://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+</div>
+<hr class="thick">
+<!--AD_END-->
+
+    <img class="logo" width="111" height="64" src="anvil_thttpd.gif" alt="anvil">
+    <h3>thttpd notes</h3>
+
+    <P>
+      Topics:
+    </p>
+
+    <ul>
+      <li><a href="notes.html#samples">sample installations</a> </li>
+      <li><a href="notes.html#chroot">setting up a chroot jail</a> </li>
+      <li><a href="notes.html#throttle">throttling</a> </li>
+      <li><a href="notes.html#nbio">non-blocking I/O</a> </li>
+      <li><a href="notes.html#listen">listen queue length</a> </li>
+      <li><a href="notes.html#aliasing">IP aliasing</a> </li>
+      <li><a href="notes.html#developers">HTTP developers</a> </li>
+      <li><a href="notes.html#syslog">syslog</a> </li>
+    </ul>
+
+    <hr>
+
+    <h3><a name="samples">Sample installations:</a></h3>
+
+    <p>
+      To help you set up your own thttpd site, let's look in detail at two
+      sample setups.
+      We'll use FreeBSD, since that's the best OS for serious web serving.
+      The first sample will be for a plain old single-domain site.
+      Most of these steps require you to be root.
+    </p>
+
+    <ul>
+
+      <li>
+	Install. <br>
+        First, do the usual unpack, <code>./configure</code>,
+	<code>make</code>,
+        and <code>make install</code>.
+        No need to make any changes in config.h, it comes with reasonable
+	settings.
+        The executable will be installed as <code>/usr/local/sbin/thttpd</code>.
+      </li>
+
+      <li>
+	Startup script. <br>
+	FreeBSD wants /usr/local daemons to get started by a shell script in
+	<code>/usr/local/etc/rc.d</code> - here's all you need for this:
+	<blockquote><pre><code>
+#!/bin/sh
+
+if [ -x /usr/local/sbin/thttpd_wrapper ] ; then
+    echo -n " thttpd"
+    /usr/local/sbin/thttpd_wrapper &
+fi
+	</code></pre></blockquote>
+	Put this into a file called <code>thttpd.sh</code> in
+	/usr/local/etc/rc.d, and make sure it's executable.
+      </li>
+
+      <li>
+	Wrapper script. <br>
+	You may have noticed that the startup script didn't call thttpd itself,
+	rather it runs a wrapper script.
+	This script is very simple - all it does is run thttpd, and if thttpd
+	ever exits then the script waits ten seconds and then starts it again.
+	<blockquote><pre><code>
+#!/bin/sh
+
+while true ; do
+    /usr/local/sbin/thttpd -D -C /usr/local/www/thttpd_config
+    sleep 10
+done
+	</code></pre></blockquote>
+	The -D flag tells thttpd to <B>not</B> put itself into the background,
+	and the -C flag tells it to get the rest of its configuration from
+	the specified config file.
+	Again, make sure the script is executable.
+      </li>
+
+      <li>
+	Config file. <br>
+	I like to put config stuff in a file like this, instead of doing it
+	as command-line flags in the wrapper script, so that making
+	configuration changes doesn't require editing an executable.
+	So, create the directory <code>/usr/local/www</code> if necessary
+	and then put this into <code>/usr/local/www/thttpd_config</code>:
+	<blockquote><pre><code>
+dir=/usr/local/www/data
+chroot
+cgipat=**.cgi
+logfile=/usr/local/www/logs/thttpd_log
+pidfile=/var/run/thttpd.pid
+	</code></pre></blockquote>
+	Note that while this allows anyone to make CGI programs, it also puts
+	everything into a chroot tree.
+	Unless you make special provisions, the only CGIs that will run inside
+	chroot tree are compiled and statically-linked executables.
+	This is a very secure setup, but admittedly somewhat inconvenient for
+	those writing the CGIs.
+      </li>
+
+      <li>
+	Data directory. <br>
+	The config file specifies that the data directory is
+	<code>/usr/local/www/data</code>; this is what Apache calls the
+	DocumentRoot.
+	So, create this directory and put your HTML files there.
+	If you want to allow local users to put up there own web stuff,
+	create subdirectories for them and chown/chmod them accordingly.
+      </li>
+
+      <li>
+	Log files. <br>
+	Create the directory <code>/usr/local/www/logs</code> to hold your
+	log files.
+	You will want to rotate your logs, so they don't get overly large.
+	Here's a rotate script that keeps the last seven days worth:
+	<blockquote><pre><code>
+#!/bin/sh
+
+cd /usr/local/www/logs
+rm -f thttpd_log.7
+mv thttpd_log.6 thttpd_log.7
+mv thttpd_log.5 thttpd_log.6
+mv thttpd_log.4 thttpd_log.5
+mv thttpd_log.3 thttpd_log.4
+mv thttpd_log.2 thttpd_log.3
+mv thttpd_log.1 thttpd_log.2
+mv thttpd_log thttpd_log.1
+kill -USR1 `cat /var/run/thttpd.pid`
+	</code></pre></blockquote>
+	The last line tells thttpd to exit cleanly, and then the wrapper
+	will restart it and it'll start writing a fresh log file.
+	Save that script as <code>/etc/periodic/daily/500.thttpd-rotate</code>
+	to have it run every night, and once again make sure it's executable.
+      </li>
+
+    </ul>
+
+    <p>
+      And that's it.
+      Reboot and you should be up and running.
+    </p>
+
+    <p>
+      Now, what if you want to serve multiple domains?
+      With HTTP/1.1 you can do "name based" virtual domains, which are
+      very easy to set up.
+      As of version 2.05 thttpd supports them.
+    </p>
+
+    <ul>
+
+      <li>
+	DNS. <br>
+	Name-based virtual hosts are set up via the domain name system.
+	You make a CNAME record (which is basically an alias) for each
+	virtual host pointing at the real host.
+	A full explanation of DNS and BIND is way beyond the scope of this
+	document, but if you just tell your local DNS person that you want
+	to make some CNAMEs, they'll know what to do.
+      </li>
+
+      <li>
+	Config file. <br>
+	All you have to do here is add the "<code>vhost</code>" option to your
+	thttpd_config file.
+      </li>
+
+      <li>
+	Data directory. <br>
+	The data dir for a vhost system is different.
+	The top level directory should not contain any HTML stuff.
+	Instead all it contains is subdirectories, one per virtual host.
+	The directory's name is just the virtual hostname, or an IP number
+	The HTML for each host goes in its subdirectory.
+	The vhost directory for my own secondary web server looks like this:
+	<blockquote><pre><code>
+lrwxr-xr-x   1 root  www   13 Nov 15 11:32 192.100.66.6@ -> gate.acme.com
+lrwxr-xr-x   1 root  www   13 Nov 15 11:32 63.197.234.19@ -> gate.acme.com
+drwxrwxr-x   3 root  www  512 Nov 15 12:15 gate.acme.com/
+drwxrwxr-x   2 root  www  512 Nov 15 12:04 www.axilla.com/
+drwxrwxr-x   2 root  www  512 Nov 15 12:16 www.cloaca.com/
+drwxrwxr-x   2 root  www  512 Nov 15 12:04 www.foetid.com/
+drwxrwxr-x   2 root  www  512 Nov 15 12:04 www.lirpa.com/
+drwxrwxr-x   2 root  www  512 Nov 15 12:04 www.maxnix.com/
+drwxrwxr-x   2 root  www  512 Nov 15 12:04 www.phoon.com/
+drwxrwxr-x   2 root  www  512 Nov 15 12:04 www.setuid.com/
+drwxrwxr-x   2 root  www  512 Nov 15 12:04 www.tranya.com/
+	</code></pre></blockquote>
+	The server's "real" name is gate.acme.com, and I added symbolic links
+	for its two IP numbers.
+	In addition there are directories for all the virtual hosts I'm serving.
+      </li>
+
+    </ul>
+
+    <p>
+      That ought to do it for name-based vhosting.
+    </p>
+
+    <hr>
+
+    <h3><a name="chroot">Setting up a chroot jail:</a></h3>
+
+    <p>
+      As mentioned in the sample installations article, running your web server
+      in a chroot tree is very secure but inconvenient if you're using CGI.
+      The only CGI programs you can run in such a setup are compiled
+      statically-linked executables.
+      If you want to write CGIs in, say, shell script, you will need a
+      more complicated setup.
+    </p>
+
+    <p>
+      The basic idea of a chroot tree is you're reproducing a limited
+      copy of the system-wide file tree.
+      It includes only the files you need, nothing else.
+      When the web server issues the chroot() system call, this sub-tree
+      becomes the filesystem as far as that one process is concerned.
+      It can't break out and get to the larger filesystem.
+      Any child processes it spawns can't break out either.
+      Obviously this adds a big layer of security.
+      However, without access to things like shared libraries and
+      interpreters, most programs can't run.
+      So, to make a chroot tree in which you can run these programs,
+      you have to put in some extra files.
+    </p>
+
+    <p>
+      Below is an "ls -lR" of the files needed for a FreeBSD-based chroot tree
+      that allows shell script CGIs.
+      This should be considered a starting point for your own chroot tree.
+      If you're using another operating system, for instance Solaris, your
+      tree will likely be very different.
+      If you want to make one that allows perl, you'll have to add in all
+      the perl files - the perl interpreter, libraries, perl files, include
+      files, all sorts of stuff.
+    </p>
+
+    <blockquote><pre><code>
+total 15
+drwxr-xr-x  2 root  wheel  512 Nov 21 17:22 bin/
+drwxr-xr-x  2 root  wheel  512 Nov 21 18:17 dev/
+drwxr-xr-x  2 root  wheel  512 Nov 21 18:13 etc/
+drwxrwxrwt  2 root  wheel  512 Nov 21 17:11 tmp/
+drwxr-xr-x  7 root  wheel  512 Nov 21 18:06 usr/
+
+./bin:
+total 1309
+-r-xr-xr-x  2 root  wheel   46600 May 17  1999 [*
+-r-xr-xr-x  1 root  wheel   55392 May 17  1999 cat*
+-r-xr-xr-x  1 root  wheel   58280 May 17  1999 chmod*
+-r-xr-xr-x  1 root  wheel   61184 May 17  1999 cp*
+-r-xr-xr-x  1 root  wheel  145784 May 17  1999 date*
+-r-xr-xr-x  1 root  wheel   41620 May 17  1999 echo*
+-r-xr-xr-x  1 root  wheel   84728 May 17  1999 expr*
+-r-xr-xr-x  1 root  wheel  155976 May 17  1999 mv*
+-r-xr-xr-x  1 root  wheel  158792 May 17  1999 rm*
+-r-xr-xr-x  1 root  wheel  321760 May 17  1999 sh*
+-r-xr-xr-x  1 root  wheel   42732 May 17  1999 sleep*
+-r-xr-xr-x  2 root  wheel   46600 May 17  1999 test*
+
+./dev:
+total 0
+crw-rw-rw-  1 root  wheel    2,   2 Nov 21 17:12 null
+crw-rw-rw-  1 root  wheel   22,   2 Nov 21 18:17 stderr
+crw-rw-rw-  1 root  wheel   22,   0 Nov 21 18:17 stdin
+crw-rw-rw-  1 root  wheel   22,   1 Nov 21 18:17 stdout
+
+./etc:
+total 2
+-r--r--r--  1 root  wheel  1000 Jul 21 15:50 localtime
+-rw-r--r--  1 root  wheel    38 Nov 12 18:42 resolv.conf
+
+./usr:
+total 5
+drwxr-xr-x  2 root  wheel  512 Nov 21 18:21 bin/
+drwxr-xr-x  2 root  wheel  512 Nov 21 18:53 lib/
+drwxr-xr-x  2 root  wheel  512 Nov 21 18:06 libexec/
+drwxrwxrwt  2 root  wheel  512 Nov 21 17:11 tmp/
+
+./usr/bin:
+total 747
+-r-xr-xr-x  1 root  wheel  119540 May 17  1999 awk*
+-r-xr-xr-x  3 root  wheel   38572 May 17  1999 egrep*
+-r-xr-xr-x  3 root  wheel   38572 May 17  1999 fgrep*
+-r-xr-xr-x  3 root  wheel   38572 May 17  1999 grep*
+-r-xr-xr-x  3 root  wheel   99448 May 17  1999 gunzip*
+-r-xr-xr-x  3 root  wheel   99448 May 17  1999 gzcat*
+-r-xr-xr-x  3 root  wheel   99448 May 17  1999 gzip*
+-r-xr-xr-x  1 root  wheel    4540 May 17  1999 head*
+-r-xr-xr-x  1 root  wheel    3356 May 17  1999 nice*
+-r-xr-xr-x  1 root  wheel   19300 May 17  1999 sed*
+-r-xr-xr-x  1 root  wheel   23940 May 17  1999 sort*
+-r-xr-xr-x  1 root  wheel    9976 May 17  1999 tail*
+-r-xr-xr-x  1 root  wheel    6388 May 17  1999 touch*
+-r-xr-xr-x  1 root  wheel    8636 May 17  1999 tr*
+-r-xr-xr-x  1 root  wheel    2356 May 17  1999 true*
+-r-xr-xr-x  1 root  wheel    5064 May 17  1999 uniq*
+-r-xr-xr-x  1 root  wheel    4384 May 17  1999 wc*
+
+./usr/lib:
+total 2507
+-r--r--r--  1 root  wheel  1043748 Nov 21 18:52 libc.a
+lrwxrwxrwx  1 root  wheel        9 Nov 21 18:53 libc.so@ -> libc.so.3
+-r--r--r--  1 root  wheel   514015 May 17  1999 libc.so.3
+-r--r--r--  1 root  wheel    27066 May 17  1999 libgnuregex.a
+lrwxrwxrwx  1 root  wheel       16 Nov 21 18:53 libgnuregex.so@ -> libgnuregex.so.2
+-r--r--r--  1 root  wheel    27154 May 17  1999 libgnuregex.so.2
+-r--r--r--  1 root  wheel   262966 May 17  1999 libm.a
+lrwxrwxrwx  1 root  wheel        9 Nov 21 18:53 libm.so@ -> libm.so.2
+-r--r--r--  1 root  wheel   115780 May 17  1999 libm.so.2
+-r--r--r--  1 root  wheel    57612 May 17  1999 libz.a
+lrwxrwxrwx  1 root  wheel        9 Nov 21 18:53 libz.so@ -> libz.so.2
+-r--r--r--  1 root  wheel    51010 May 17  1999 libz.so.2
+
+./usr/libexec:
+total 139
+-r-xr-xr-x  1 root  wheel  63652 May 17  1999 ld-elf.so.1*
+-r-xr-xr-x  1 root  wheel  77824 May 18  1999 ld.so*
+    </code></pre></blockquote>
+
+    <p>
+      A chroot setup like this is more secure than not doing chroot at all,
+      but obviously less secure than the bare minimum static-binaries-only
+      chroot jail.
+      A poorly-written CGI shell script might allow an attacker to run
+      arbitrary shell commands.
+      Without chroot, this attacker would have access to the entire machine;
+      with it, he or she is restricted to the chroot tree.
+    </p>
+
+    <p>
+      Also: it is actually possible to break out of chroot jail.
+      A process running as root, either via a setuid program or some security
+      hole, can change its own chroot tree to the next higher directory,
+      repeating as necessary to get to the top of the filesystem.
+      So, a chroot tree must be considered merely one aspect of a
+      multi-layered defense-in-depth.
+      If your chroot tree has enough tools in it for a cracker to
+      gain root access, then it's no good; so you want to keep the contents
+      to the minimum necessary.
+      In particular, don't include any setuid-root executables!
+    </p>
+
+    <p>
+      One idea I haven't tried, which might give improved security while
+      still allowing CGI access, is to use the "noexec" filesystem mount
+      option.
+      This is a flag you can set on a disk partition that tells the system
+      to not allow any programs to be run from that area.
+      The idea is, you would create two partitions for your chroot tree,
+      one with the noexec option and one without it.
+      The noexec partition becomes the main chroot tree; the execs-allowed
+      one gets mounted inside the other one, and is the only place that
+      CGI programs are allowed.
+      Then, after you have yourself all set up, you make the execs-allowed
+      partition read-only.
+    </p>
+
+    <hr>
+
+    <h3><a name="throttle">Throttling is good:</a></h3>
+
+    <p>
+      Web servers that throttle themselves keep everyone happy.
+      In a perfect world web publishers could buy infinite bandwidth for
+      pennies, and ISPs would still get rich.
+      Unfortunately we don't live in that world; in this world, bandwidth
+      is expensive, and if you want to run a popular web site
+      there are only a few possibilities:
+    </p>
+
+    <ul>
+      <li> Pay big bucks for lots of bandwidth. </li>
+      <li> Overrun your ISP's bandwidth quota and get shut down. </li>
+      <li> Throttle yourself. </li>
+    </ul>
+
+    <P>
+      It's easy to see that from the web publisher's point of view, throttling
+      is better than the alternatives.
+      What often gets missed, though, is that it's also good for ISPs and
+      for readers.
+      ISPs prefer steady predictable bandwidth usage, and they don't like the
+      hassle of trying to police or shut down sites that use too much bandwidth.
+      They'd much rather you deal with it yourself.
+      Readers don't like sites that go off the air, and they also don't like
+      getting '503 connection refused' errors, or other hard failures due to
+      overload on a non-throttling site.
+      Getting the page at a slower rate is always preferable to not getting
+      it at all.
+    </p>
+
+    <hr>
+
+    <h3><a name="nbio">Non-blocking I/O is good:</a></h3>
+
+    <p>
+      select() / poll() / kqueue() are Unix system calls used to multiplex
+      between a bunch of file descriptors.
+      To understand why this is important we have to go back through the
+      history of web servers.
+    </p>
+
+    <p>
+      The basic operation of a web server is to accept a request and send
+      back a response.
+      The first web servers were probably written to do exactly that.
+      Their users no doubt noticed very quickly that while the server
+      was sending a response to someone else, they couldn't get their
+      own requests serviced.
+      There would have been long annoying pauses.
+    </p>
+
+    <p>
+      The second generation of web servers addressed this problem by
+      forking off a child process for each request.
+      This is very straightforward to do under Unix, only a few extra
+      lines of code.
+      CERN and NCSA 1.3 are examples of type of server.
+      Unfortunately, forking a process is a fairly expensive operation,
+      so performance of this type of server is still pretty poor.
+      The long random pauses are gone, but instead every request has a short
+      constant pause at startup.
+      Because of this, the server can't handle a high rate of connections.
+    </p>
+
+    <p>
+      A slight variant of this type of server uses "lightweight processes" or
+      "threads" instead of full-blown Unix processes.
+      This is better, but there is no standard LWP/threads interface so
+      this approach is inherently non-portable.
+      Examples of these servers: MDMA and phttpd, both of which run
+      only under Solaris 2.x.
+    </p>
+
+    <p>
+      The third generation of servers is called "pre-forking".
+      Instead of starting a new subprocess for each request, they have a
+      pool of subprocesses that they keep around and re-use.
+      NCSA 1.4, Apache, and Netscape Netsite are examples of this type.
+      Performance of these servers is excellent,
+      they can handle from two to ten times as many
+      connections per second as the forking servers.
+      One problem, however, is that implementing this simple-to-state idea
+      turns out to be fairly complicated and non-portable.
+      The method used by NCSA involves transferring a file descriptor from the
+      parent process to an already-existing child process;
+      you can hardly use the same code on any two different OS's, and
+      some OS's (e.g. Linux) don't support it at all.
+      Apache uses a different method, with all the child processes
+      doing their own round-robin work queue via lock files,
+      which brings in issues of portability/speed/deadlock.
+      Besides, you still have multiple processes hanging around using up
+      memory and context-switch CPU cycles.
+      Which brings us to...
+
+    <p>
+      The fourth generation.
+      One process only.
+      No non-portable threads/LWPs.
+      Sends multiple files concurrently using non-blocking I/O, calling
+      select()/poll()/kqueue() to tell which ones are ready for more data.
+      Speed is excellent.
+      Memory use is excellent.
+      Portability is excellent.
+      Examples of this generation: Spinner, Open Market, and thttpd.
+      Perhaps Apache will switch to this method at some point.
+      I really can't understand why they went with that complicated pre-forking
+      stuff.
+      Using non-blocking I/O is just not that hard.
+    </p>
+
+    <hr>
+
+    <h3><a name="listen">On the listen queue length:</a></h3>
+
+    <p>
+      Many web admins think there are two main types of performance
+      bottlenecks for a web server, the raw data rate of the network
+      connection, and the CPU usage on the server machine.
+      In fact there is
+      a third common bottleneck that's still fairly obscure.
+      If you run into
+      this limit you may find that your web server isn't using much CPU, your
+      network link isn't particularly full, and yet there are consistent
+      complaints of timeouts and "connection refused" errors.
+      It can be a very frustrating situation.
+    </p>
+
+    <p>
+      Here's the deal: most versions of Unix have very short pending-connection
+      queues.
+      This queue is for connections waiting to be accept()ed, and
+      typically it's of length 5.
+      This puts a severe limit on how many
+      connections/second the server can handle - if one comes in while the
+      queue is full, it gets dropped on the floor and the client gets
+      "connection refused".
+      With only 5 slots in the queue, you'll start to
+      see this behavior at around 3 connections/second.
+      thttpd tries to
+      minimize the effect of this limit by accepting new connections as fast
+      as possible, and saving them in its own internal higher-capacity queue
+      for later processing.
+      Even so, for best performance you really want to
+      make the system's queue longer, more like 32, which will handle maybe
+      10 to 20 connections/second.
+    </p>
+
+    <p>
+      On Solaris systems you can increase the queue length with this command:
+    </p>
+
+    <blockquote><pre><code>
+    /usr/sbin/ndd -set /dev/tcp tcp_conn_req_max 32
+    </code></pre></blockquote>
+
+    <p>
+      You have to run this as root, of course.
+      This should go in the system startup script "/etc/rc2.d/S69inet".
+      You can raise it higher than 32
+      if you like - if you're running Solaris 2.5 you can increase it to
+      1024, otherwise the limit is 512.
+    </p>
+
+    <p>
+      On BSD/OS you use:
+    </p>
+
+    <blockquote><pre><code>
+    /usr/bin/bpatch -l -r somaxconn 32
+    </code></pre></blockquote>
+
+    <p>
+      Not sure what the maximum is here.
+    </p>
+
+    <p>
+      HP-UX 10.0 sets the default limit to 20, which is not too bad.
+    </p>
+
+    <p>
+      Many other systems also have tiny queue limits - if I find out specifics
+      on how to raise those limits, I'll put the info here.
+    </p>
+
+    <hr>
+
+    <h3><a name="aliasing">On IP aliasing:</a></h3>
+
+    <p>
+      If you want to do multi-homing but your OS's ifconfig program doesn't
+      have the alias command, you may still be able to get it to work.
+    </p>
+
+    <p>
+      If you're running Solaris 2.3 or later, it's just a matter of a
+      different user-interface on the ifconfig program.
+      The Solaris equivalent of the example in the thttpd man page would be:
+    </p>
+
+    <blockquote><pre><code>
+    ifconfig le0 www.acme.com
+    ifconfig le0:0 www.acme.com
+    ifconfig le0:1 www.joe.acme.com up
+    ifconfig le0:2 www.jane.acme.com up
+    </code></pre></blockquote>
+
+    <p>
+      Not so hard.
+      Still, it would be nice if Sun got with the program and
+      supported the alias command.
+      Maybe some day.
+    </p>
+
+    <p>
+      If you're running IRIX, you can use the PPP driver to add IP aliases.
+      This is complicated but does not require kernel hacking.
+      First you start up PPP commands for the aliased addresses.
+      Sticking once again with the example in the man page:
+    </p>
+
+    <blockquote><pre><code>
+    /usr/etc/ppp -r 192.100.66.200 &
+    /usr/etc/ppp -r 192.100.66.201 &
+    </code></pre></blockquote>
+
+    <p>
+      These commands will complain that they can't find the address - that's
+      ok, you just need them to start.
+      In fact if you like, you can kill them after they complain.
+      Next you point the aliased addresses at the real one, using ifconfig:
+    </p>
+
+    <blockquote><pre><code>
+    ifconfig ppp0 192.100.66.200 192.100.66.10
+    ifconfig ppp0 192.100.66.201 192.100.66.10
+    </code></pre></blockquote>
+
+    <p>
+      Next you have to tell ARP that all the IP addresses go to the same
+      ethernet address.
+      You will need the ethernet address for you system, which you can
+      get from the netstat -ia command - it's the bunch of hex digits separated
+      by colons.
+    </p>
+
+    <blockquote><pre><code>
+    arp -s 192.100.66.10 08:00:20:09:0e:86 pub
+    arp -s 192.100.66.200 08:00:20:09:0e:86 pub
+    arp -s 192.100.66.201 08:00:20:09:0e:86 pub
+    </code></pre></blockquote>
+
+    <p>
+      Finally, you have to add routes from the new PPP interfaces to localhost:
+    </p>
+
+    <blockquote><pre><code>
+    route add 192.100.66.200 localhost 1
+    route add 192.100.66.201 localhost 1
+    </code></pre></blockquote>
+
+    <p>
+      If you're running SunOS 4.1.x, fetch this tar file:
+      <A HREF="ftp://ftp.cerf.net/pub/vendor/peggy/vif.tar.gz">ftp://ftp.cerf.net/pub/vendor/peggy/vif.tar.gz</A>
+      It contains some netnews articles with instructions and source code
+      for adding a "virtual interface" device to the kernel.
+      Installing this stuff is not trivial.
+      There's also supposedly a way to use
+      a PPP driver under SunOS, as with IRIX above, but I haven't found
+      details on this yet.
+    </p>
+
+    <p>
+      If you're running Linux, here's a pointer to some kernel patches to
+      add ip aliasing:
+      <a href="ftp://ftp.mindspring.com/users/rsanders/ipalias/">ftp://ftp.mindspring.com/users/rsanders/ipalias/</a>
+      I'm not sure what version of Linux this is for.
+      Recent/future versions
+      of Linux may come with aliasing already installed, so check your ifconfig
+      man page before you start hacking.
+    </p>
+
+    <hr>
+
+    <h3><a name="developers">For HTTP developers:</a></h3>
+
+    <p>
+      The package includes a simple library that you could use for embedding
+      an HTTP server in your own application.
+      The interface is somewhat more
+      complicated than most applications would need, to enable the
+      multi-connection stuff in the main program, but it should still be
+      quite useful.
+    </p>
+
+    <p>
+      The package also contains a nice little timer library, that could be used
+      for all sorts of stuff.
+      If you borrow this you will probably want to
+      make it do its own gettimeofday() calls - the only reason I'm passing
+      the time as a parameter is as an optimization, since the main program
+      already has the current time for other reasons.
+    </p>
+
+    <p>
+      Plus there's a cute little filename matcher routine, and a general
+      symbolic-link-expander routine.
+    </p>
+
+    <hr>
+
+    <h3><a name="syslog">On syslog performance and security:</a></h3>
+
+    <p>
+      Syslog is the standard Unix logging mechanism.
+      It's very flexible, and lets you do things like log different programs to
+      different files and get real-time notification of critical events.
+      However, many programmers avoid using it, possibly because they
+      worry it adds too much overhead.
+      Well, I did some simple benchmarks comparing syslog logging against
+      the stdio logging that other web servers use.
+      Under conditions approximating an extremely busy web server, I found
+      that syslog was slower by only a few percent.
+      Under less strenuous conditions there was no measurable difference.
+    </p>
+
+    <p>
+      Another concern about syslog is security against external attacks.
+      It's written somewhat casually, using a fixed-size internal buffer
+      without overflow checking.
+      That makes it vulnerable to a buffer-overrun attack such as used
+      by the Morris Worm against fingerd.
+      However, it's easy to call syslog in such as way that this attack
+      becomes impossible - just put a maximum size on all the string
+      formatting codes you use.  For instance, use %.80s instead of %s.
+      Thttpd does this.
+    </p>
+
+    <hr class="thick">
+
+    <a href="http://validator.w3.org/check?uri=referer"><img class="logo" width="88" height="31" border="0" src="http://www.acme.com/resources/images/valid-html401-gold.png" alt="valid HTML"></a>
+
+    <p>
+      <a href="http://www.acme.com/">ACME Labs</a> / <a href="http://www.acme.com/software/">Software</a> / <a href="index.html">thttpd</a><br>
+      <a href="http://www.acme.com/mailto/?id=wa"><img class="mailto" src="http://www.acme.com/mailto/wa.gif" alt="email"></a>
+    </p>
+
+  </body>
+
+</html>
